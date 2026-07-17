@@ -5,6 +5,8 @@
 
 // Plain strings: t("中文") -> EN_PLAIN["中文"].
 export const EN_PLAIN: Record<string, string> = {
+  "Get Token Base URL": "Get Token Base URL",
+  "Get Token 控制台": "Get Token Console",
   "API Key 模式下扩展插件市场请求，尽量显示完整插件列表；官方/混合模式通常不需要。":
     "Expands plugin marketplace requests in API Key mode to show the full plugin list. Usually unnecessary in official/mixed mode.",
   "API Key 环境变量": "API Key environment variable",
@@ -16,8 +18,6 @@ export const EN_PLAIN: Record<string, string> = {
   "Codex 意外停止": "Codex stopped unexpectedly",
   "Codex 版本": "Codex version",
   "Codex 目标": "Codex goals",
-  "Codex++ 官方中转站，主打稳定接入和划算价格，支持 GPT-5.6 全系列、Fable 5、Sonnet 5、GPT-5.5、GPT-5.4、Claude Opus 4.8、Claude Opus 4.7、gpt-image-2 等模型与图像能力。":
-    "The official Codex++ relay, built for stable access and good value, supporting the full GPT-5.6 family, Fable 5, Sonnet 5, GPT-5.5, GPT-5.4, Claude Opus 4.8, Claude Opus 4.7, gpt-image-2 and other models plus image capabilities.",
   "Codex++ 导入": "Codex++ import",
   "Codex++ 版本": "Codex++ version",
   "Codex增强": "Codex enhancements",
@@ -232,6 +232,7 @@ export const EN_PLAIN: Record<string, string> = {
   "在侧边栏会话标题前显示短 ID 和 UUIDv7 创建时间，方便定位历史会话。":
     "Show a short ID and UUIDv7 creation time before session titles in the sidebar to help locate past sessions.",
   "基础设置": "Basic settings",
+  "国内优选": "China optimized",
   "填写中转服务 Base URL": "Enter the relay service Base URL",
   "复制": "Copy",
   "复制 ssh:// URL": "Copy ssh:// URL",
@@ -252,7 +253,6 @@ export const EN_PLAIN: Record<string, string> = {
   "安装维护": "Install & maintenance",
   "完整增强": "Full enhancement",
   "官方": "Official",
-  "官方中转站": "Official relay",
   "官方混入 API Key": "Official mixed-in API Key",
   "官方混合 API 不应在 auth.json 中保存 OPENAI_API_KEY。请清理此供应商的 auth.json 后再切换。":
     "Official mixed API should not store OPENAI_API_KEY in auth.json. Clear this provider's auth.json before switching.",
@@ -340,9 +340,9 @@ export const EN_PLAIN: Record<string, string> = {
   "手动": "Manual",
   "手动启动": "Manual launch",
   "打开": "Open",
-  "打开 JOJO Code": "Open JOJO Code",
   "打开关于": "Open About",
   "打开链接": "Open link",
+  "全球线路": "Global endpoint",
   "打开项目主页": "Open project homepage",
   "扩展项": "entry",
   "批量删除会话": "Bulk delete sessions",
@@ -565,6 +565,11 @@ export const EN_PLAIN: Record<string, string> = {
   "记录最近打开": "Record recently opened",
   "设为当前": "Set as current",
   "设置": "Settings",
+  "访问 Get Token 控制台": "Open Get Token Console",
+  "查看 API Key、余额、用量记录和账户设置。": "View API keys, balance, usage records, and account settings.",
+  "选择内置线路并输入 API Key 即可使用，无需登录 ChatGPT；默认提供 Grok-4.5 和 GPT-5.5。":
+    "Choose a built-in endpoint and enter an API key to start without signing in to ChatGPT. Grok-4.5 and GPT-5.5 are included by default.",
+  "默认 API 服务": "Default API service",
   "设置保存": "Settings saved",
   "设置已加载": "Settings loaded",
   "设置重置": "Settings reset",

@@ -385,9 +385,15 @@ impl Default for BackendSettings {
 
 impl BackendSettings {
     pub fn active_relay_profile(&self) -> RelayProfile {
+        let has_default_profile = self.relay_profiles.len() == 1
+            && (self.relay_profiles[0] == RelayProfile::default()
+                || self.relay_profiles[0]
+                    == default_relay_profiles()
+                        .into_iter()
+                        .next()
+                        .expect("default relay profile should exist"));
         if self.active_relay_id == default_active_relay_id()
-            && self.relay_profiles.len() == 1
-            && self.relay_profiles[0] == RelayProfile::default()
+            && has_default_profile
             && (!self.relay_api_key.is_empty() || self.relay_base_url != default_relay_base_url())
         {
             return RelayProfile {
@@ -567,11 +573,42 @@ pub fn default_active_relay_id() -> String {
 }
 
 pub fn default_relay_test_model() -> String {
-    "gpt-5.4-mini".to_string()
+    "grok-4.5".to_string()
 }
 
 pub fn default_relay_profiles() -> Vec<RelayProfile> {
-    vec![RelayProfile::default()]
+    vec![RelayProfile {
+        id: default_active_relay_id(),
+        name: "Get Token API".to_string(),
+        model: "grok-4.5".to_string(),
+        base_url: "https://api.clawto.link".to_string(),
+        upstream_base_url: "https://api.clawto.link".to_string(),
+        api_key: String::new(),
+        protocol: RelayProtocol::Responses,
+        relay_mode: RelayMode::PureApi,
+        official_mix_api_key: false,
+        test_model: "grok-4.5".to_string(),
+        config_contents: concat!(
+            "model = \"grok-4.5\"\n",
+            "model_provider = \"get-token\"\n\n",
+            "[model_providers.get-token]\n",
+            "name = \"Get Token API\"\n",
+            "wire_api = \"responses\"\n",
+            "requires_openai_auth = true\n",
+            "base_url = \"https://api.clawto.link\"\n",
+        )
+        .to_string(),
+        auth_contents: "{}\n".to_string(),
+        use_common_config: true,
+        context_selection: RelayContextSelection::default(),
+        context_selection_initialized: true,
+        context_window: String::new(),
+        auto_compact_limit: String::new(),
+        model_insert_mode: RelayModelInsertMode::Patch,
+        model_list: "grok-4.5\ngpt-5.5".to_string(),
+        model_windows: String::new(),
+        user_agent: String::new(),
+    }]
 }
 
 pub fn default_aggregate_member_weight() -> u32 {
@@ -1291,7 +1328,18 @@ mod tests {
         assert_eq!(settings.launch_mode, LaunchMode::Patch);
         assert_eq!(settings.relay_base_url, default_relay_base_url());
         assert!(settings.relay_api_key.is_empty());
-        assert_eq!(settings.relay_profiles[0].relay_mode, RelayMode::Official);
+        let profile = &settings.relay_profiles[0];
+        assert_eq!(profile.name, "Get Token API");
+        assert_eq!(profile.relay_mode, RelayMode::PureApi);
+        assert_eq!(profile.base_url, "https://api.clawto.link");
+        assert_eq!(profile.model, "grok-4.5");
+        assert_eq!(profile.model_list, "grok-4.5\ngpt-5.5");
+        assert!(
+            profile
+                .config_contents
+                .contains("model_provider = \"get-token\"")
+        );
+        assert_eq!(profile.auth_contents, "{}\n");
         assert!(settings.relay_common_config_contents.is_empty());
         assert_eq!(settings.relay_test_model, default_relay_test_model());
         assert!(!settings.codex_app_stepwise_enabled);

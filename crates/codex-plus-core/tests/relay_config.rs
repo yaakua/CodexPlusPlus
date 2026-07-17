@@ -13,7 +13,9 @@ use codex_plus_core::relay_config::{
     set_codex_goals_feature_in_home, strip_common_config_from_config,
     sync_live_config_context_entries, upsert_context_entry_in_common_config,
 };
-use codex_plus_core::settings::{RelayContextSelection, RelayMode, RelayProfile, RelayProtocol};
+use codex_plus_core::settings::{
+    RelayContextSelection, RelayMode, RelayProfile, RelayProtocol, default_relay_profiles,
+};
 
 fn write_remote_plugin_marketplace_snapshot(home: &std::path::Path) {
     let root = home.join(".tmp").join("plugins-remote");
@@ -3217,6 +3219,23 @@ experimental_bearer_token = "sk-new"
 fn relay_profile_default_has_empty_model_windows() {
     let profile = RelayProfile::default();
     assert_eq!(profile.model_windows, "");
+}
+
+#[test]
+fn get_token_default_profile_only_needs_an_api_key() {
+    let temp = tempfile::tempdir().unwrap();
+    let mut profile = default_relay_profiles().remove(0);
+    profile.auth_contents = r#"{"OPENAI_API_KEY":"sk-get-token"}"#.to_string();
+
+    let result = apply_relay_profile_to_home_with_switch_rules(temp.path(), &profile, "").unwrap();
+
+    assert!(result.configured);
+    let config = std::fs::read_to_string(temp.path().join("config.toml")).unwrap();
+    let auth = std::fs::read_to_string(temp.path().join("auth.json")).unwrap();
+    assert!(config.contains(r#"model = "grok-4.5""#));
+    assert!(config.contains(r#"model_provider = "get-token""#));
+    assert!(config.contains(r#"base_url = "https://api.clawto.link""#));
+    assert!(auth.contains(r#""OPENAI_API_KEY":"sk-get-token""#));
 }
 
 fn sanitize(value: &str) -> String {

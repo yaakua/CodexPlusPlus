@@ -23,6 +23,16 @@ export interface ProviderPreset {
   modelList?: string[];
 }
 
+export const GET_TOKEN_BASE_URL_OPTIONS = [
+  { value: "https://api.clawto.link", label: "国内优选" },
+  { value: "https://api.gettoken.dev", label: "全球线路" },
+] as const;
+
+export const GET_TOKEN_MODELS = [
+  { value: "grok-4.5", label: "Grok-4.5" },
+  { value: "gpt-5.5", label: "GPT-5.5" },
+] as const;
+
 /**
  * 预设列表。选择任一预设会自动填充：
  * - name     → 供应商名称
@@ -32,6 +42,18 @@ export interface ProviderPreset {
  * - modelList → 可选模型清单（换行分隔）
  */
 export const PRESETS: ProviderPreset[] = [
+  {
+    id: "get-token",
+    name: "Get Token API",
+    websiteUrl: "https://gettoken.dev/zh-CN/console",
+    apiKeyUrl: "https://gettoken.dev/zh-CN/console",
+    category: "aggregator",
+    baseUrl: GET_TOKEN_BASE_URL_OPTIONS[0].value,
+    protocol: "responses",
+    model: GET_TOKEN_MODELS[0].value,
+    modelList: GET_TOKEN_MODELS.map((model) => model.value),
+  },
+
   // ── 官方 ──
   {
     id: "openai",

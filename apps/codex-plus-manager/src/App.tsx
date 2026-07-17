@@ -65,6 +65,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { isGitHubRepositoryHomepage } from "./github-repository";
+import { GET_TOKEN_BASE_URL_OPTIONS, GET_TOKEN_MODELS } from "./presets";
 import {
   mergeModelWindowRows,
   modelWindowRowsFromProfile,
@@ -75,6 +76,7 @@ import { resolveProviderSyncCompletion } from "./provider-sync-flow";
 import { getLanguage, t, tf, toggleLanguage } from "@/i18n";
 
 const isWindowsPlatform = /\bWindows\b/i.test(navigator.userAgent);
+const GET_TOKEN_CONSOLE_URL = "https://gettoken.dev/zh-CN/console";
 
 type Status = "ok" | "failed" | "not_implemented" | "not_checked" | string;
 
@@ -754,23 +756,23 @@ const defaultSettings: BackendSettings = {
   relayProfiles: [
     {
       id: "default",
-      name: t("默认中转"),
-      model: "",
-      baseUrl: "",
-      upstreamBaseUrl: "",
+      name: "Get Token API",
+      model: GET_TOKEN_MODELS[0].value,
+      baseUrl: GET_TOKEN_BASE_URL_OPTIONS[0].value,
+      upstreamBaseUrl: GET_TOKEN_BASE_URL_OPTIONS[0].value,
       apiKey: "",
       protocol: "responses",
-      relayMode: "official",
+      relayMode: "pureApi",
       officialMixApiKey: false,
-      testModel: "",
-      configContents: "",
-      authContents: "",
+      testModel: GET_TOKEN_MODELS[0].value,
+      configContents: `model = "grok-4.5"\nmodel_provider = "get-token"\n\n[model_providers.get-token]\nname = "Get Token API"\nwire_api = "responses"\nrequires_openai_auth = true\nbase_url = "https://api.clawto.link"\n`,
+      authContents: "{}\n",
       useCommonConfig: true,
       contextSelection: emptyContextSelection(),
       contextSelectionInitialized: true,
       contextWindow: "",
       autoCompactLimit: "",
-      modelList: "",
+      modelList: GET_TOKEN_MODELS.map((model) => model.value).join("\n"),
       modelWindows: "",
       userAgent: "",
     },
@@ -780,7 +782,7 @@ const defaultSettings: BackendSettings = {
   activeRelayId: "default",
   aggregateRelayProfiles: [],
   activeAggregateRelayId: "",
-  relayTestModel: "gpt-5.4-mini",
+  relayTestModel: GET_TOKEN_MODELS[0].value,
 };
 
 export function App() {
@@ -2451,27 +2453,21 @@ function OverviewScreen({
                 <Network className="h-5 w-5" />
               </div>
               <div>
-                <span className="eyebrow">{t("官方中转站")}</span>
-                <h2>JOJO Code</h2>
+                <span className="eyebrow">{t("默认 API 服务")}</span>
+                <h2>Get Token</h2>
                 <p>
-                  {t("Codex++ 官方中转站，主打稳定接入和划算价格，支持 GPT-5.6 全系列、Fable 5、Sonnet 5、GPT-5.5、GPT-5.4、Claude Opus 4.8、Claude Opus 4.7、gpt-image-2 等模型与图像能力。")}
+                  {t("选择内置线路并输入 API Key 即可使用，无需登录 ChatGPT；默认提供 Grok-4.5 和 GPT-5.5。")}
                 </p>
               </div>
             </div>
             <div className="jojocode-overview-side">
               <div className="jojocode-model-tags">
-                <span>GPT-5.6 全系列</span>
-                <span>Fable 5</span>
-                <span>Sonnet 5</span>
+                <span>Grok-4.5</span>
                 <span>GPT-5.5</span>
-                <span>GPT-5.4</span>
-                <span>Opus 4.8</span>
-                <span>Opus 4.7</span>
-                <span>gpt-image-2</span>
               </div>
-              <Button onClick={() => void actions.openExternalUrl("https://jojocode.com/")}>
+              <Button onClick={() => void actions.openExternalUrl(GET_TOKEN_CONSOLE_URL)}>
                 <ExternalLink className="h-4 w-4" />
-                {t("打开 JOJO Code")}
+                {t("访问 Get Token 控制台")}
               </Button>
             </div>
           </div>
@@ -3666,6 +3662,20 @@ function SettingsScreen({
   return (
     <>
       <Panel>
+        <CardHead
+          title={t("Get Token 控制台")}
+          detail={t("查看 API Key、余额、用量记录和账户设置。")}
+        />
+        <CardContent>
+          <Toolbar>
+            <Button onClick={() => void actions.openExternalUrl(GET_TOKEN_CONSOLE_URL)}>
+              <ExternalLink className="h-4 w-4" />
+              {t("访问 Get Token 控制台")}
+            </Button>
+          </Toolbar>
+        </CardContent>
+      </Panel>
+      <Panel>
         <CardHead title={t("基础设置")} detail={settings?.settings_path ?? ""} />
         <CardContent>
           <div className="theme-row">
@@ -4302,6 +4312,8 @@ function RelayProfileEditor({
   }
 
   const showApiFields = profile.relayMode !== "official" || profile.officialMixApiKey;
+  const isGetTokenProfile = profile.name.trim().toLowerCase() === "get token api"
+    || GET_TOKEN_BASE_URL_OPTIONS.some((option) => option.value === profile.baseUrl || option.value === profile.upstreamBaseUrl);
   const updateDraft = (patch: Partial<RelayProfile>) => {
     onProfileChange(applyRelayProfilePatchToFiles(profile, patch, { allowGenerateFiles: isNew }));
   };
@@ -4378,11 +4390,23 @@ function RelayProfileEditor({
           </select>
         </Field>
         <Field className="relay-field-config-model" label={t("配置模型")}>
-          <Input
-            value={profile.model}
-            onChange={(event) => updateDraft({ model: event.currentTarget.value })}
-            placeholder={t("例如 deepseek-v4-pro")}
-          />
+          {isGetTokenProfile ? (
+            <select
+              className="field-select"
+              value={profile.model}
+              onChange={(event) => updateDraft({ model: event.currentTarget.value })}
+            >
+              {GET_TOKEN_MODELS.map((model) => (
+                <option key={model.value} value={model.value}>{model.label}</option>
+              ))}
+            </select>
+          ) : (
+            <Input
+              value={profile.model}
+              onChange={(event) => updateDraft({ model: event.currentTarget.value })}
+              placeholder={t("例如 deepseek-v4-pro")}
+            />
+          )}
           <p className="field-hint">
             {t("默认启动 Codex 时使用的模型名，请勿带后缀；上下文窗口请在下方「模型列表」中按模型单独配置。")}
           </p>
@@ -4454,12 +4478,26 @@ function RelayProfileEditor({
         ) : null}
         {showApiFields ? (
           <div className="relay-api-fields">
-            <Field className="relay-field-base-url" label="Base URL">
-              <Input
-                value={profile.baseUrl}
-                onChange={(event) => updateDraft({ baseUrl: event.currentTarget.value })}
-                placeholder={t("填写中转服务 Base URL")}
-              />
+            <Field className="relay-field-base-url" label={isGetTokenProfile ? t("Get Token Base URL") : "Base URL"}>
+              {isGetTokenProfile ? (
+                <select
+                  className="field-select"
+                  value={profile.baseUrl}
+                  onChange={(event) => updateDraft({ baseUrl: event.currentTarget.value })}
+                >
+                  {GET_TOKEN_BASE_URL_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label === "国内优选" ? t("国内优选") : t("全球线路")} · {option.value}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  value={profile.baseUrl}
+                  onChange={(event) => updateDraft({ baseUrl: event.currentTarget.value })}
+                  placeholder={t("填写中转服务 Base URL")}
+                />
+              )}
             </Field>
             <Field className="relay-field-key" label="Key">
               <Input
