@@ -1,11 +1,11 @@
 use codex_plus_core::install::{
-    InstallOptions, MANAGER_BUNDLE_ID, SILENT_BINARY, SILENT_BUNDLE_ID, app_bundle_names,
-    build_macos_app_bundle, build_windows_entrypoint_plan, companion_binary_path_from_exe,
-    default_install_root_strategy, macos_companion_bundle_identifier_from_exe, shortcut_names,
+    InstallOptions, SILENT_BINARY, SILENT_BUNDLE_ID, app_bundle_names, build_macos_app_bundle,
+    build_windows_entrypoint_plan, companion_binary_path_from_exe, default_install_root_strategy,
+    macos_companion_bundle_identifier_from_exe, shortcut_names,
 };
 
 #[test]
-fn windows_entrypoint_plan_contains_silent_and_manager_entrypoints() {
+fn windows_entrypoint_plan_exposes_one_visible_entrypoint() {
     let options = InstallOptions {
         install_root: Some("C:/Users/A/Desktop".into()),
         launcher_path: Some("C:/Tools/codex-plus-plus.exe".into()),
@@ -16,7 +16,7 @@ fn windows_entrypoint_plan_contains_silent_and_manager_entrypoints() {
     let plan = build_windows_entrypoint_plan(&options);
 
     assert!(plan.silent_shortcut.ends_with("Codex++.lnk"));
-    assert!(plan.manager_shortcut.ends_with("Codex++ 管理工具.lnk"));
+    assert!(plan.manager_shortcut.ends_with("Codex++.lnk"));
     assert_eq!(plan.launcher_path, "C:/Tools/codex-plus-plus.exe");
     assert_eq!(plan.manager_path, "C:/Tools/codex-plus-plus-manager.exe");
     assert_eq!(plan.silent_icon_path, "C:/Tools/codex-plus-plus.exe");
@@ -56,7 +56,7 @@ fn windows_entrypoint_plan_can_request_owned_data_removal_without_shell_script()
     let plan = build_windows_entrypoint_plan(&options);
 
     assert!(plan.silent_shortcut.ends_with("Codex++.lnk"));
-    assert!(plan.manager_shortcut.ends_with("Codex++ 管理工具.lnk"));
+    assert!(plan.manager_shortcut.ends_with("Codex++.lnk"));
     assert!(plan.remove_owned_data);
 }
 
@@ -97,9 +97,9 @@ fn macos_bundle_metadata_contains_silent_and_manager_apps() {
 }
 
 #[test]
-fn installer_exports_expected_two_entrypoint_names() {
-    assert_eq!(shortcut_names(), ("Codex++.lnk", "Codex++ 管理工具.lnk"));
-    assert_eq!(app_bundle_names(), ("Codex++.app", "Codex++ 管理工具.app"));
+fn installer_exports_one_visible_entrypoint_name() {
+    assert_eq!(shortcut_names(), ("Codex++.lnk", "Codex++.lnk"));
+    assert_eq!(app_bundle_names(), ("Codex++.app", "Codex++.app"));
 }
 
 #[test]
@@ -108,6 +108,8 @@ fn macos_dmg_includes_applications_shortcut_for_drag_install() {
         .expect("read macOS DMG packaging script");
 
     assert!(script.contains("ln -s /Applications \"$STAGE/Applications\""));
+    assert!(script.contains("$STAGE/Codex++.app/Contents/MacOS/codex-plus-plus-manager"));
+    assert!(!script.contains("create_app \"Codex++ 管理工具\""));
 }
 
 #[test]
@@ -146,6 +148,22 @@ fn companion_binary_path_resolves_macos_manager_app_next_to_silent_app() {
 }
 
 #[test]
+fn companion_binary_path_prefers_manager_sidecar_inside_single_macos_app() {
+    let temp = tempfile::tempdir().unwrap();
+    let macos = temp.path().join("Codex++.app/Contents/MacOS");
+    std::fs::create_dir_all(&macos).unwrap();
+    let launcher = macos.join("CodexPlusPlus");
+    let manager = macos.join("codex-plus-plus-manager");
+    std::fs::write(&launcher, "launcher").unwrap();
+    std::fs::write(&manager, "manager").unwrap();
+
+    assert_eq!(
+        companion_binary_path_from_exe(&launcher, codex_plus_core::install::MANAGER_BINARY),
+        manager
+    );
+}
+
+#[test]
 fn macos_companion_launch_uses_bundle_ids_from_app_translocation() {
     let manager_exe = std::path::Path::new(
         "/private/var/folders/x/AppTranslocation/manager-id/d/Codex++ 管理工具.app/Contents/MacOS/CodexPlusPlusManager",
@@ -163,7 +181,7 @@ fn macos_companion_launch_uses_bundle_ids_from_app_translocation() {
             silent_exe,
             codex_plus_core::install::MANAGER_BINARY,
         ),
-        Some(MANAGER_BUNDLE_ID)
+        None
     );
 }
 

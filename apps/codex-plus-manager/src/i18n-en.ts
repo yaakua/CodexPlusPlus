@@ -5,6 +5,7 @@
 
 // Plain strings: t("中文") -> EN_PLAIN["中文"].
 export const EN_PLAIN: Record<string, string> = {
+  "Codex++ 启动入口": "Codex++ launch entry",
   "Get Token Base URL": "Get Token Base URL",
   "Get Token 控制台": "Get Token Console",
   "API Key 模式下扩展插件市场请求，尽量显示完整插件列表；官方/混合模式通常不需要。":
@@ -525,9 +526,7 @@ export const EN_PLAIN: Record<string, string> = {
   "策略": "Strategy",
   "管理 API 供应商、协议、Key 与配置文件": "Manage API providers, protocols, keys and config files",
   "管理 Codex SSH 项目并加入 Zed workspace": "Manage Codex SSH projects and add them to a Zed workspace",
-  "管理工具入口": "Manager entrypoint",
   "管理控制台": "Management console",
-  "管理控制台入口": "Management console entrypoint",
   "类型": "Type",
   "粘贴修复": "Paste fix",
   "索引": "Index",
@@ -541,8 +540,8 @@ export const EN_PLAIN: Record<string, string> = {
   "编辑后保存列表，再切换模式时会使用新配置": "After editing, save the list; the new config is used the next time you switch modes",
   "编辑扩展项": "Edit entry",
   "缺失": "Missing",
-  "缺少 Codex++ 静默启动快捷方式时可在安装维护页修复。": "When the Codex++ silent launch shortcut is missing, repair it on the Install & Maintenance page.",
-  "缺少管理工具快捷方式时可在安装维护页修复。": "When the manager shortcut is missing, repair it on the Install & Maintenance page.",
+  "缺少 Codex++ 启动入口时可在安装维护页修复。": "Repair the Codex++ launch entry on the Install & Maintenance page if it is missing.",
+  "保存并启动 Codex": "Save and launch Codex",
   "聚合": "Aggregate",
   "聚合/中转": "Aggregate/relay",
   "聚合供应商": "Aggregate provider",
@@ -635,7 +634,7 @@ export const EN_PLAIN: Record<string, string> = {
   "重新安装": "Reinstall",
   "重新生成": "Regenerate",
   "重置背景": "Reset background",
-  "静默启动入口": "Silent launch entrypoint",
+  "请输入 API Key 后再启动 Codex。": "Enter an API key before launching Codex.",
   "项目地址": "Project URL",
   "额外参数": "Extra arguments",
   "高级选项，默认关闭；当前实现不主动改写 Zed settings。": "Advanced option, off by default; the current implementation doesn't actively modify Zed settings.",

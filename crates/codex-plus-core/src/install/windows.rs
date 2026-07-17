@@ -46,7 +46,7 @@ pub fn build_windows_entrypoint_plan(options: &InstallOptions) -> WindowsEntrypo
             .to_string_lossy()
             .to_string(),
         manager_shortcut: install_root
-            .join("Codex++ 管理工具.lnk")
+            .join("Codex++.lnk")
             .to_string_lossy()
             .to_string(),
         install_root: install_root.to_string_lossy().to_string(),
@@ -75,12 +75,8 @@ pub fn install_shortcuts(options: &InstallOptions) -> anyhow::Result<()> {
         "Launch Codex++ silently",
         PathBuf::from(&plan.silent_icon_path),
     )?;
-    create_entrypoint_shortcut(
-        PathBuf::from(&plan.manager_shortcut),
-        PathBuf::from(&plan.manager_path),
-        "Open Codex++ management tool",
-        PathBuf::from(&plan.manager_icon_path),
-    )?;
+    let legacy_manager_shortcut = install_root.join("Codex++ 管理工具.lnk");
+    let _ = std::fs::remove_file(legacy_manager_shortcut);
     register_url_protocol(&plan.manager_path)?;
     write_uninstall_registration(&plan)?;
     Ok(())
@@ -91,6 +87,7 @@ pub fn uninstall_shortcuts(options: &InstallOptions) -> anyhow::Result<()> {
     let plan = build_windows_entrypoint_plan(options);
     let _ = std::fs::remove_file(&plan.silent_shortcut);
     let _ = std::fs::remove_file(&plan.manager_shortcut);
+    let _ = std::fs::remove_file(PathBuf::from(&plan.install_root).join("Codex++ 管理工具.lnk"));
     let _ = crate::windows_integration::delete_current_user_key(&format!(
         r"{URL_PROTOCOL_SUBKEY}\shell\open\command"
     ));

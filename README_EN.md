@@ -26,12 +26,9 @@ Download the latest installer from [GitHub Releases](https://github.com/BigPizza
 - macOS Intel: `CodexPlusPlus-*-macos-x64.dmg`
 - macOS Apple Silicon: `CodexPlusPlus-*-macos-arm64.dmg`
 
-After installation, two entry points are available:
+After installation, only one `Codex++` entry is visible. On the first launch, if no API key has been configured, Codex++ opens the Get Token setup automatically. Saving the configuration launches the official desktop app with the selected provider, models, and enhancements. You can later reopen Get Token and API settings from the `Codex++` menu inside Codex.
 
-- `Codex++`: silently starts the official desktop app with saved provider settings and enhancements.
-- `Codex++ Manager`: manages providers, models, tools, sessions, enhancements, scripts, updates, and diagnostics.
-
-For first-time setup, open the manager, verify the detected app path, configure a provider and optional enhancements, then launch through `Codex++`. The Windows installer creates Desktop and Start Menu shortcuts. The macOS DMG installs `/Applications/Codex++.app` and `/Applications/Codex++ 管理工具.app`.
+The launcher and settings manager are still bundled as internal components of the same product, but no second desktop shortcut or macOS app is created.
 
 ## Sponsors
 
@@ -207,7 +204,7 @@ Settings that depend on renderer injection generally require saving and restarti
 
 Codex++ publishes installers through GitHub Releases. Windows builds an NSIS installer, while macOS builds separate Intel x64 and Apple Silicon arm64 DMGs.
 
-The manager's About page can check and start updates. When the silent launcher finds a new version, it opens the manager directly on the update prompt.
+The About page in the Codex++ settings window can check and start updates. When the launcher finds a new version, it opens the same settings window directly on the update prompt.
 
 ## Data Locations
 
@@ -221,7 +218,7 @@ The manager's About page can check and start updates. When the silent launcher f
 
 ### The Codex++ menu does not appear
 
-Launch through the `Codex++` entry instead of opening the official app directly. Check the detected app path, launch status, and diagnostic logs in the manager's Maintenance and About pages.
+Launch through the `Codex++` entry instead of opening the official app directly. Check the detected app path, launch status, and diagnostic logs in the Codex++ settings window's Maintenance and About pages.
 
 ### Requests fail after switching providers
 

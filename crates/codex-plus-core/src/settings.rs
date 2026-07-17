@@ -384,6 +384,13 @@ impl Default for BackendSettings {
 }
 
 impl BackendSettings {
+    pub fn requires_api_key_onboarding(&self) -> bool {
+        let profile = self.active_relay_profile();
+        self.relay_profiles_enabled
+            && profile.relay_mode == RelayMode::PureApi
+            && profile.api_key.trim().is_empty()
+    }
+
     pub fn active_relay_profile(&self) -> RelayProfile {
         let has_default_profile = self.relay_profiles.len() == 1
             && (self.relay_profiles[0] == RelayProfile::default()
@@ -1355,6 +1362,31 @@ mod tests {
         assert_eq!(settings.codex_app_stepwise_max_input_chars, 6000);
         assert_eq!(settings.codex_app_stepwise_max_output_tokens, 500);
         assert_eq!(settings.codex_app_stepwise_timeout_ms, 8000);
+        assert!(settings.requires_api_key_onboarding());
+    }
+
+    #[test]
+    fn api_key_onboarding_stops_after_default_profile_receives_a_key() {
+        let mut settings = BackendSettings::default();
+        settings.relay_profiles[0].api_key = "sk-get-token".to_string();
+
+        assert!(!settings.requires_api_key_onboarding());
+    }
+
+    #[test]
+    fn official_login_mode_does_not_require_api_key_onboarding() {
+        let mut settings = BackendSettings::default();
+        settings.relay_profiles[0].relay_mode = RelayMode::Official;
+
+        assert!(!settings.requires_api_key_onboarding());
+    }
+
+    #[test]
+    fn disabled_provider_configuration_does_not_require_api_key_onboarding() {
+        let mut settings = BackendSettings::default();
+        settings.relay_profiles_enabled = false;
+
+        assert!(!settings.requires_api_key_onboarding());
     }
 
     #[test]

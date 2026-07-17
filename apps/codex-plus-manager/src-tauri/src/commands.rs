@@ -365,6 +365,7 @@ pub struct ScriptMarketPayload {
 #[serde(rename_all = "camelCase")]
 pub struct StartupPayload {
     pub show_update: bool,
+    pub onboarding: bool,
 }
 
 #[tauri::command]
@@ -383,6 +384,7 @@ pub fn startup_options() -> CommandResult<StartupPayload> {
         "启动参数已读取。",
         StartupPayload {
             show_update: startup_should_show_update(),
+            onboarding: startup_should_show_onboarding(),
         },
     )
 }
@@ -392,6 +394,21 @@ pub fn startup_should_show_update() -> bool {
         std::env::args(),
         std::env::var("CODEX_PLUS_SHOW_UPDATE").ok().as_deref(),
     )
+}
+
+pub fn startup_should_show_onboarding() -> bool {
+    should_show_onboarding(
+        std::env::args(),
+        std::env::var("CODEX_PLUS_ONBOARDING").ok().as_deref(),
+    )
+}
+
+fn should_show_onboarding<I, S>(args: I, env_value: Option<&str>) -> bool
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    args.into_iter().any(|arg| arg.as_ref() == "--onboarding") || env_value == Some("1")
 }
 
 fn should_show_update<I, S>(args: I, env_value: Option<&str>) -> bool
@@ -3411,6 +3428,15 @@ mod tests {
             ["codex-plus-plus-manager.exe", "--show-update"],
             None
         ));
+    }
+
+    #[test]
+    fn startup_options_honors_onboarding_argument() {
+        assert!(should_show_onboarding(
+            ["codex-plus-plus-manager", "--onboarding"],
+            None
+        ));
+        assert!(!should_show_onboarding(["codex-plus-plus-manager"], None));
     }
 
     #[test]

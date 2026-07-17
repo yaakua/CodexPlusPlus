@@ -47,6 +47,14 @@ async fn main() -> Result<()> {
         activate_existing_codex_app(&options).await?;
         return Ok(());
     };
+    if codex_plus_core::settings::SettingsStore::default()
+        .load()
+        .unwrap_or_default()
+        .requires_api_key_onboarding()
+    {
+        open_manager_for_onboarding()?;
+        return Ok(());
+    }
     tokio::spawn(async {
         let _ = notify_manager_when_update_available().await;
     });
@@ -215,6 +223,15 @@ fn open_manager_with_update_prompt() -> anyhow::Result<()> {
     )
     .map(|_| ())
     .map_err(|error| anyhow::anyhow!("启动管理工具失败：{error}"))
+}
+
+fn open_manager_for_onboarding() -> anyhow::Result<()> {
+    codex_plus_core::install::spawn_companion(
+        codex_plus_core::install::MANAGER_BINARY,
+        ["--onboarding"],
+    )
+    .map(|_| ())
+    .map_err(|error| anyhow::anyhow!("启动 Get Token 配置失败：{error}"))
 }
 
 fn parse_launch_options<I, S>(args: I) -> LaunchOptions

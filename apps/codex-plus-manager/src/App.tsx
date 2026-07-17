@@ -684,6 +684,7 @@ function syncMarketInstalledState(current: ScriptMarketResult | null, userScript
 
 type StartupResult = CommandResult<{
   showUpdate: boolean;
+  onboarding: boolean;
 }>;
 
 type Route = "overview" | "relay" | "relayEnvironment" | "sessions" | "context" | "enhance" | "zedRemote" | "userScripts" | "recommendations" | "maintenance" | "about" | "settings";
@@ -1995,6 +1996,7 @@ export function App() {
     () => ({
       refreshCurrent: () => navigate(route),
       launch,
+      hideManagerToTray,
       restart,
       repairPluginMarketplace,
       refreshRemotePluginMarketplace,
@@ -2356,6 +2358,7 @@ export function App() {
 type Actions = {
   refreshCurrent: () => Promise<void>;
   launch: () => Promise<void>;
+  hideManagerToTray: () => Promise<void>;
   restart: () => Promise<void>;
   repairPluginMarketplace: () => Promise<void>;
   refreshRemotePluginMarketplace: (silent?: boolean) => Promise<RemotePluginMarketplaceResult | null>;
@@ -2623,7 +2626,9 @@ function RelayScreen({
   actions: Actions;
 }) {
   const normalized = normalizeSettings(form);
-  const [detailProfileId, setDetailProfileId] = useState<string | null>(null);
+  const [detailProfileId, setDetailProfileId] = useState<string | null>(() => (
+    isOnboardingFlow() ? normalized.activeRelayId : null
+  ));
   const [newProfileDraft, setNewProfileDraft] = useState<RelayProfile | null>(null);
   const [thirdPartyImportOpen, setThirdPartyImportOpen] = useState(false);
   const detailProfile = newProfileDraft || (detailProfileId
@@ -3484,8 +3489,7 @@ function MaintenanceScreen({
         <CardContent>
           <div className="status-table">
             <StatusRow title={t("Codex 应用")} status={overview?.codex_app.status} path={overview?.codex_app.path} />
-            <StatusRow title={t("静默启动入口")} status={overview?.silent_shortcut.status} path={overview?.silent_shortcut.path} />
-            <StatusRow title={t("管理控制台入口")} status={overview?.management_shortcut.status} path={overview?.management_shortcut.path} />
+            <StatusRow title={t("Codex++ 启动入口")} status={overview?.silent_shortcut.status} path={overview?.silent_shortcut.path} />
             <StatusRow title={t("Watcher 自动接管")} status={watcher?.enabled ? "ok" : "disabled"} path={watcher?.disabled_flag} />
           </div>
           <Toolbar>
@@ -4182,7 +4186,16 @@ function RelayProfileDetail({
     setDraft(nextDraft);
     setModelWindowRows(modelWindowRowsFromProfile(nextDraft.modelList, nextDraft.modelWindows || ""));
   }, [profile.id, profile.modelList, profile.modelWindows, profileUsesLiveFiles, isActive, isNew, relayFiles?.configContents, relayFiles?.authContents]);
-  const validationError = isAggregateRelayProfile(draft) ? aggregateRelayProfileValidation(draft) : null;
+  const onboarding = isOnboardingFlow() && isActive;
+  const onboardingError = onboarding
+    && !isAggregateRelayProfile(draft)
+    && draft.relayMode === "pureApi"
+    && !draft.apiKey.trim()
+    ? t("请输入 API Key 后再启动 Codex。")
+    : null;
+  const validationError = isAggregateRelayProfile(draft)
+    ? aggregateRelayProfileValidation(draft)
+    : onboardingError;
   const draftWithModelRows = () => {
     const serializedRows = serializeModelWindowRows(modelWindowRows);
     return { ...draft, modelList: serializedRows.modelList, modelWindows: serializedRows.modelWindows };
@@ -4202,6 +4215,10 @@ function RelayProfileDetail({
         true,
       );
       await actions.saveRelayFile("auth", normalizedDraft.authContents, true);
+    }
+    if (onboarding) {
+      await actions.launch();
+      await actions.hideManagerToTray();
     }
     onSaved?.();
   };
@@ -4227,7 +4244,7 @@ function RelayProfileDetail({
           </Button>
           <Button disabled={!!validationError} onClick={() => void saveDraft()} title={validationError || t("保存")}>
             <Save className="h-4 w-4" />
-            {t("保存")}
+            {onboarding ? t("保存并启动 Codex") : t("保存")}
           </Button>
         </Toolbar>
       </div>
@@ -6316,16 +6333,10 @@ function healthItems(overview: OverviewResult | null) {
       detail: overview?.codex_app.path || t("尚未检查 Codex 应用路径。"),
     },
     {
-      title: t("静默启动入口"),
+      title: t("Codex++ 启动入口"),
       status: overview?.silent_shortcut.status ?? "not_checked",
       ok: overview?.silent_shortcut.status === "installed",
-      detail: overview?.silent_shortcut.path || t("缺少 Codex++ 静默启动快捷方式时可在安装维护页修复。"),
-    },
-    {
-      title: t("管理工具入口"),
-      status: overview?.management_shortcut.status ?? "not_checked",
-      ok: overview?.management_shortcut.status === "installed",
-      detail: overview?.management_shortcut.path || t("缺少管理工具快捷方式时可在安装维护页修复。"),
+      detail: overview?.silent_shortcut.path || t("缺少 Codex++ 启动入口时可在安装维护页修复。"),
     },
   ];
 }
@@ -7366,5 +7377,11 @@ function loadInitialRoute(): Route {
   if (params.get("showUpdate") === "1" || window.location.hash === "#about") {
     return "about";
   }
+  if (params.get("onboarding") === "1") return "relay";
   return "overview";
+}
+
+function isOnboardingFlow(): boolean {
+  if (typeof window === "undefined") return false;
+  return new URLSearchParams(window.location.search).get("onboarding") === "1";
 }

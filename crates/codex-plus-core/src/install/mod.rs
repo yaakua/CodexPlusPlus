@@ -76,11 +76,11 @@ impl ShortcutState {
 }
 
 pub fn shortcut_names() -> (&'static str, &'static str) {
-    ("Codex++.lnk", "Codex++ 管理工具.lnk")
+    ("Codex++.lnk", "Codex++.lnk")
 }
 
 pub fn app_bundle_names() -> (&'static str, &'static str) {
-    ("Codex++.app", "Codex++ 管理工具.app")
+    ("Codex++.app", "Codex++.app")
 }
 
 pub fn inspect_entrypoints() -> EntryPointState {
@@ -225,7 +225,8 @@ fn entrypoint_candidates(root: &Option<PathBuf>, manager: bool) -> Vec<PathBuf> 
     let Some(root) = root else {
         return Vec::new();
     };
-    let name = if manager { MANAGER_NAME } else { SILENT_NAME };
+    let _ = manager;
+    let name = SILENT_NAME;
     if cfg!(windows) {
         vec![root.join(format!("{name}.lnk"))]
     } else if cfg!(target_os = "macos") {
@@ -298,9 +299,12 @@ pub fn macos_companion_bundle_identifier_from_exe(
     binary: &str,
 ) -> Option<&'static str> {
     let (_, app_name) = macos_applications_dir_and_app_name_from_exe(exe)?;
-    let known_bundle =
-        app_name == format!("{SILENT_NAME}.app") || app_name == format!("{MANAGER_NAME}.app");
-    if !known_bundle {
+    if app_name == format!("{SILENT_NAME}.app") {
+        // The single visible app carries both executables. Launch the sidecar
+        // directly so Launch Services does not look for a second app bundle.
+        return None;
+    }
+    if app_name != format!("{MANAGER_NAME}.app") {
         return None;
     }
     match binary {
@@ -346,6 +350,15 @@ fn macos_companion_binary_from_exe(exe: &Path, binary: &str) -> Option<PathBuf> 
         );
     }
     if binary == MANAGER_BINARY {
+        if app_name == format!("{SILENT_NAME}.app") {
+            let same_bundle = exe
+                .parent()
+                .unwrap_or_else(|| Path::new("."))
+                .join(MANAGER_BINARY);
+            if same_bundle.exists() {
+                return Some(same_bundle);
+            }
+        }
         if app_name == format!("{MANAGER_NAME}.app") {
             return Some(macos_preferred_bundle_binary(
                 exe,

@@ -26,12 +26,9 @@ Codex++ 是面向 OpenAI Codex / ChatGPT 桌面应用的外部启动器与管理
 - macOS Intel：`CodexPlusPlus-*-macos-x64.dmg`
 - macOS Apple Silicon：`CodexPlusPlus-*-macos-arm64.dmg`
 
-安装后会有两个入口：
+安装后只显示一个 `Codex++` 入口。首次启动且尚未配置 API Key 时，会自动打开 Get Token 配置；保存后立即启动官方桌面应用并加载供应商、模型与增强功能。后续可从 Codex 页面内的 `Codex++` 菜单打开 Get Token 与 API 设置。
 
-- `Codex++`：静默启动官方桌面应用，并加载已保存的供应商配置与增强功能。
-- `Codex++ 管理工具`：管理供应商、模型、工具插件、会话、增强功能、脚本、更新和诊断。
-
-首次使用建议先打开管理工具，确认应用路径和运行状态，再配置供应商与增强功能，最后从 `Codex++` 入口启动。Windows 安装包会创建桌面和开始菜单快捷方式；macOS DMG 会安装 `/Applications/Codex++.app` 和 `/Applications/Codex++ 管理工具.app`。
+启动器和设置管理器仍作为同一产品的内部模块随安装包提供，但不会再创建第二个桌面快捷方式或第二个 macOS App。
 
 ## 赞助商
 
@@ -231,7 +228,7 @@ Codex++ 将官方登录、混入 API 和纯 API 分开保存和切换：
 
 Codex++ 通过 GitHub Release 发布安装包。Windows 会生成 NSIS 安装程序，macOS 会生成 Intel x64 和 Apple Silicon arm64 两个 DMG。
 
-管理工具的“关于”页可以检查并启动更新。静默启动器发现新版本时会拉起管理工具并进入更新提示。
+Codex++ 设置窗口的“关于”页可以检查并启动更新。启动器发现新版本时会打开同一 App 的设置窗口并进入更新提示。
 
 ## 数据位置
 
@@ -270,11 +267,10 @@ git worktree add -b <new-branch> <worktree-path> upstream/<base-branch>
 如果遇到该提示，可以在终端执行下面两条命令，解除苹果系统的安全隔离限制：
 
 ```bash
-sudo xattr -rd com.apple.quarantine /Applications/Codex++\ 管理工具.app
 sudo xattr -rd com.apple.quarantine /Applications/Codex++.app
 ```
 
-执行后重新打开 `Codex++` 或 `Codex++ 管理工具` 即可。
+执行后重新打开 `Codex++` 即可。
 
 ### macOS Intel 能用吗
 

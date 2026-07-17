@@ -78,8 +78,35 @@ fn is_bundle_macos_target(target: &Path) -> bool {
 
 #[cfg(target_os = "macos")]
 pub fn install_app_bundles(options: &InstallOptions) -> anyhow::Result<()> {
-    write_bundle(&build_app_bundle(options, false))?;
-    write_bundle(&build_app_bundle(options, true))?;
+    let bundle = build_app_bundle(options, false);
+    write_bundle(&bundle)?;
+    install_manager_sidecar(&bundle, options)?;
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn install_manager_sidecar(
+    bundle: &MacosAppBundle,
+    options: &InstallOptions,
+) -> anyhow::Result<()> {
+    let source = install_binary_source(
+        option_or_current_exe(&options.manager_path, MANAGER_BINARY),
+        MANAGER_BINARY,
+    );
+    if !source.exists() {
+        anyhow::bail!("管理器 sidecar 不存在：{}", source.to_string_lossy());
+    }
+    let target = bundle
+        .app_path
+        .join("Contents")
+        .join("MacOS")
+        .join(MANAGER_BINARY);
+    if source != target {
+        fs::copy(source, &target)?;
+    }
+    let mut permissions = fs::metadata(&target)?.permissions();
+    permissions.set_mode(0o755);
+    fs::set_permissions(target, permissions)?;
     Ok(())
 }
 

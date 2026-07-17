@@ -150,7 +150,7 @@ fn manager_launch_button_spawns_silent_launcher_binary() {
 }
 
 #[test]
-fn macos_packager_hides_silent_launcher_but_not_manager() {
+fn macos_packager_embeds_manager_in_single_visible_app() {
     let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
     let packager = manifest_dir
         .parent()
@@ -168,8 +168,14 @@ fn macos_packager_hides_silent_launcher_but_not_manager() {
         "create_app \"Codex++\" \"CodexPlusPlus\" \"$BINARY_DIR/codex-plus-plus\" \"com.bigpizzav3.codexplusplus\" \"true\""
     ));
     assert!(script.contains(
-        "create_app \"Codex++ 管理工具\" \"CodexPlusPlusManager\" \"$BINARY_DIR/codex-plus-plus-manager\" \"com.bigpizzav3.codexplusplus.manager\" \"false\""
+        "cp \"$BINARY_DIR/codex-plus-plus-manager\" \"$STAGE/Codex++.app/Contents/MacOS/codex-plus-plus-manager\""
     ));
+    assert!(
+        script.contains(
+            "codesign --force --sign - \"$app_dir/Contents/MacOS/codex-plus-plus-manager\""
+        )
+    );
+    assert!(!script.contains("create_app \"Codex++ 管理工具\""));
 }
 
 #[test]

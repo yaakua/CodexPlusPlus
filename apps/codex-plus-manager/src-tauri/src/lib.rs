@@ -21,27 +21,42 @@ pub fn run() {
             "version": env!("CARGO_PKG_VERSION")
         }),
     );
-    let Some(_guard) = acquire_single_instance_guard() else {
+    let Some(guard) = acquire_single_instance_guard() else {
         return;
     };
+    let focus_listener = guard.try_clone_listener().ok().flatten();
     let show_update = commands::startup_should_show_update();
+    let onboarding = commands::startup_should_show_onboarding();
     let run_result = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .setup(move |app| {
             let url = if show_update {
                 "/index.html?showUpdate=1"
+            } else if onboarding {
+                "/index.html?onboarding=1"
             } else {
                 "/index.html"
             };
             let mut main_window_builder =
                 tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App(url.into()))
-                    .title("Codex++ 管理工具")
+                    .title("Codex++ 设置")
                     .inner_size(1180.0, 820.0)
                     .min_inner_size(960.0, 720.0);
             if let Some(icon) = app.default_window_icon().cloned() {
                 main_window_builder = main_window_builder.icon(icon)?;
             }
             let main_window = main_window_builder.build()?;
+            if let Some(listener) = focus_listener {
+                let app_handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    for stream in listener.incoming() {
+                        if stream.is_err() {
+                            break;
+                        }
+                        show_main_window(&app_handle);
+                    }
+                });
+            }
             install_tray(app)?;
             register_main_window_events(main_window);
             Ok(())
@@ -233,10 +248,11 @@ fn show_main_window<R: tauri::Runtime>(app_handle: &tauri::AppHandle<R>) {
     }
 }
 
-/// Restores and focuses an existing manager window on Windows.
-///
-/// This is a no-op on other platforms.
+/// Signals the existing manager process to restore its window. Windows also
+/// keeps the native activation fallback for older packaged builds.
 pub fn focus_existing_manager_window() {
+    let _ =
+        std::net::TcpStream::connect(("127.0.0.1", codex_plus_core::ports::manager_guard_port()));
     #[cfg(windows)]
     {
         let current_process_id = std::process::id();

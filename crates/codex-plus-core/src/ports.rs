@@ -174,6 +174,13 @@ impl LoopbackPortGuard {
             .then_some(())
             .and_then(|_| self.lock_path.as_deref())
     }
+
+    pub fn try_clone_listener(&self) -> std::io::Result<Option<TcpListener>> {
+        self._listener
+            .as_ref()
+            .map(TcpListener::try_clone)
+            .transpose()
+    }
 }
 
 pub fn acquire_resilient_loopback_port_guard(port: u16) -> std::io::Result<LoopbackPortGuard> {

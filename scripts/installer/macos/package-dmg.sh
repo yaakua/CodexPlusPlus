@@ -94,6 +94,9 @@ sign_app() {
   local executable
   executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app_dir/Contents/Info.plist")"
   codesign --force --sign - "$app_dir/Contents/MacOS/$executable"
+  if [ -x "$app_dir/Contents/MacOS/codex-plus-plus-manager" ]; then
+    codesign --force --sign - "$app_dir/Contents/MacOS/codex-plus-plus-manager"
+  fi
   codesign --force --sign - "$app_dir"
 }
 
@@ -115,17 +118,20 @@ verify_app() {
     echo "error: codesign verification failed for $app_dir" >&2
     return 1
   }
+  if [ ! -x "$app_dir/Contents/MacOS/codex-plus-plus-manager" ]; then
+    echo "error: missing embedded manager sidecar in $app_dir" >&2
+    return 1
+  fi
 }
 
 prepare_icon
 create_app "Codex++" "CodexPlusPlus" "$BINARY_DIR/codex-plus-plus" "com.bigpizzav3.codexplusplus" "true"
-create_app "Codex++ 管理工具" "CodexPlusPlusManager" "$BINARY_DIR/codex-plus-plus-manager" "com.bigpizzav3.codexplusplus.manager" "false"
+cp "$BINARY_DIR/codex-plus-plus-manager" "$STAGE/Codex++.app/Contents/MacOS/codex-plus-plus-manager"
+chmod +x "$STAGE/Codex++.app/Contents/MacOS/codex-plus-plus-manager"
 
 sign_app "$STAGE/Codex++.app"
-sign_app "$STAGE/Codex++ 管理工具.app"
 
 verify_app "$STAGE/Codex++.app"
-verify_app "$STAGE/Codex++ 管理工具.app"
 
 ln -s /Applications "$STAGE/Applications"
 
